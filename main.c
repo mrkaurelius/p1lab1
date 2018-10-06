@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include<time.h> //srand() icin
+#include<time.h>
 #include <string.h>
-#define FILE_PATH  "/home/mrk0debian/dev/c/proLab1/inputFile"
-#define FILE_PATH_MAP  "/home/mrk0debian/dev/c/proLab1/harita"
+#define FILE_PATH  "/home/mrk0debian/dev/c/proLab1/inputFile" //windowsta file path farklıdır
+#define FILE_PATH_MAP  "/home/mrk0debian/dev/c/proLab1/harita" //windowsta file path farklıdır
 #define ROWS 3
 #define COLS 3
 
@@ -13,34 +13,26 @@ struct street{
     int dens;
 };
 
-
 void initMap();
 int *initInputArray();
 int createInputFile(int inputCount);
-//windowsta file path farklıdır
 
 int main() {
-    //girdi adedi SIMDILIK hardcoded
-    //SPARSE MATRIS
-    createInputFile(9);
+    //GIRDI VE MODEL TEST EDILDI I/O DENKLEMI KALDI
+    createInputFile(9);  //girdi adedi SIMDILIK hardcoded
     int *inputArray;
     inputArray = initInputArray();
     struct street strt[8];
     int i,j,nullCount = 0;
     const char JUNCTION[4] = {'A','B','C','D'};
+    const char allStrt[8] = {'x','y','z','t','a','b','c','d'};
     const char outerStrt[4] = {'x','y','z','t'};
     const char innerStrt[4] = {'a','b','c','d'};
-    initMap();
-
-    for ( i = 0; i < 9; i++) {
-        if (inputArray[i] == -1) {
-            nullCount++;
-        }
-    }
     char inpStr[2];
     char outStr[2];
     int k = 0;
-
+    initMap();
+    // Legal giriş bekleniyor
     printf("-> girişleri seçin ve çıkışları seçin (x,y,z,t) \n" );
     while(1){
         printf("-> %d. girişi seçin:  ",k+1 );
@@ -60,7 +52,6 @@ int main() {
             break;
         }
     }
-    // string girince control patlıyor
     k = 0;
     while(1){
         printf("-> %d. çıkış seçin:  ",k+1 );
@@ -89,7 +80,6 @@ int main() {
     strt[1].route[0] = 'I';
     strt[2].route[1] = 'O';
     strt[3].route[1] = 'O';
-
     //ALLAHIN INAYETI START
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 4; j++) {
@@ -106,6 +96,7 @@ int main() {
         }
     }
     //ALLAHIN INAYETI END
+    ////////////////////////////////////////////// while
     while(1){
         char tmpc;
         printf("\n-> caddlerin yönlerini seçin \n" );
@@ -124,7 +115,7 @@ int main() {
             printf("-> hatalı giriş yaptınız\n" );
             continue;
         }
-        printf("-> b caddesinin yönünü seçin (x,y): " );
+        printf("-> b caddesinin yönünü seçin (y,x): " );
         scanf(" %c",&tmpc );
         if (tmpc == 'x' || tmpc =='y') {
             strt[5].name = 'b';
@@ -156,7 +147,7 @@ int main() {
             printf("-> hatalı giriş yaptınız\n" );
             continue;
         }
-        printf("-> d caddesinin yönünü seçin (t,z): " );
+        printf("-> d caddesinin yönünü seçin (z,t): " );
         scanf(" %c",&tmpc );
         if (tmpc == 't' || tmpc =='z') {
             strt[7].name = 'd';
@@ -165,8 +156,8 @@ int main() {
                 strt[7].route[1] = 'D';
             }
             else{
-                strt[7].route[1] = 'D';
-                strt[7].route[0] = 'C';
+                strt[7].route[0] = 'D';// COMMIT NOTU HATA DUZELTILDI
+                strt[7].route[1] = 'C';
             }
         }else{
             printf("-> hatalı giriş yaptınız\n" );
@@ -174,23 +165,82 @@ int main() {
         }
         break;
     }
-    //dens burada giriliyor
-    for ( i = 0; i < 8; i++) {
-        inputArray[i];
-    }
+    ////////////////////////////////////////////// while!!
+    char *strtNull = malloc(1 * sizeof(char));
+    k = 0;
     for (i = 0; i < 8; i++) {
-        strt[i].dens = inputArray[i];
+        strt[i].dens = inputArray[i]; //DOSYADAN GIRIS
         if (strt[i].dens == -1) {
-            strt[i].dens = NULL;
+            strtNull = realloc(strtNull , sizeof(char));
+            strtNull[k] = strt[i].name;
+            nullCount++;
+            k++;
         }
         printf(">>> strt[%d].name >>> %c, strt.route %c -> %c  strt.dens -> %d\n",i,strt[i].name,strt[i].route[0],strt[i].route[1],strt[i].dens );
     }
+    for (i = 0; i < nullCount; i++) {
+        printf("strtNull >>> %c\n",strtNull[i]);
+    }
 
-    
+    int masterMatris[5][9]; // LINEER CEBIRE BAK
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 9; j++) {
+            masterMatris[i][j] = 0;
+        }
+    }
+    //ALLAHIN INAYETI START
+    //Toplam giriş çıkışı ayrı hesapla
+    //const char JUNCTION[4]  = {'A','B','C','D'};
+    int constantSum = 0;
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 9; j++) {
+            if (strt[j].route[1] == JUNCTION[i] && strt[j].dens == -1) {
+                masterMatris[i][j] = 1;
+            }else if (strt[j].route[0] == JUNCTION[i] && strt[j].dens == -1){
+                masterMatris[i][j] = -1;
+            }
+            if (strt[j].dens != -1) {
+                if (strt[j].route[0] == JUNCTION[i]) {
+                    constantSum += strt[j].dens;
+                }else if (strt[j].route[1] == JUNCTION[i]) {
+                    constantSum -= strt[j].dens;
+                }
+            }
+        }
+        masterMatris[i][8] = constantSum;
+        constantSum = 0;
+    }
+    // !!! INP OUT DENKLEMI
+    constantSum = 0;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            if (strt[i].route[0] == 'I' && strt[i].dens == -1 && strt[i].name == strt[j].name) {
+                masterMatris[4][j] = 1;
+            }else if(strt[i].route[1] == 'O' && strt[i].dens == -1 && strt[i].name == strt[j].name) {
+                masterMatris[4][j] = -1;
+            }
+            if (strt[i].route[1] == 'O' && strt[i].dens != -1 && strt[i].name == strt[j].name) {
+                constantSum -= strt[i].dens;
+            }else if (strt[i].route[0] == 'I' && strt[i].dens != -1 && strt[i].name == strt[j].name) {
+                constantSum += strt[i].dens;
+            }
+        }
+    }
+    masterMatris[4][8] = constantSum;
+
+    for (i = 0; i < 8; i++) { //-> PRINT MASTER MATRIS FONK
+        printf("  %4c  ",strt[i].name);
+    }
+    printf("  cons  \n");
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j <  9; j++) {
+            printf(" [%4d] ",masterMatris[i][j]);
+        }
+        printf("\n" );
+    }
 
     return 0;
 }
-////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 int createInputFile(int inputCount){
     FILE *inputFile;
