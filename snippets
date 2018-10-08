@@ -26,5 +26,31 @@ void initMap() {
     printf("\"%s\"\n", buf);
     }
     printf("merhaba\n" );
-
 }
+
+float gaussMatris[nullCount][nullCount + 1]; //consları ayrıyeten atabiliriz
+for (i = 0; i < nullCount; i++) {
+    for (j = 0; j < nullCount; j++) {
+        gaussMatris[i][j] = 0;
+    }
+}
+int tmpi=0,tmpj=0;
+for (i = 0; i < 5; i++) {
+    for (j = 0; j < 8; j++) {
+        if (/* condition */) {
+            /* code */
+        }
+    }
+}
+
+/*
+int col = 0;
+for(i = 0;i < 4; i++){
+    while(col < 8){
+      //move data to the left
+      masterMatris[i][col]=masterMatris[i][col+1];
+      col++;
+}
+masterMatris[i] = realloc(masterMatris[i], sizeof(int)*8);
+}
+*/
