@@ -2,11 +2,17 @@
 #include <stdlib.h>
 #include<time.h>
 #include <string.h>
-#define FILE_PATH  "/home/mrk0debian/dev/c/proLab1/inputFile" //windowsta file path farklıdır
+#define FILE_PATH_S1  "/home/mrk0debian/dev/c/proLab1/inputFileS1" //windowsta file path farklıdır
+#define FILE_PATH_S2  "/home/mrk0debian/dev/c/proLab1/inputFileS2" //windowsta file path farklıdır
 #define FILE_PATH_MAP  "/home/mrk0debian/dev/c/proLab1/harita" //windowsta file path farklıdır
-#define ROWS 3
-#define COLS 3
-//STRUCTLAR FONKSYONDA CALISI
+#define S1ROW 4
+#define S1COL 9
+
+struct s1MatrisSize{
+    int row_size;
+    int col_size;
+}s1Msize;
+
 struct streetMap1{
     char name;
     char route[2];
@@ -20,51 +26,81 @@ struct streetMap2{
 }strt2[9];
 
 void initMap();
-int *initInputArray();
-int createInputFile(int inputCount);
-void getstrt1Direction(struct streetMap1 strt1f[],int strt1Size);
-void printstrt1MasterMatris(struct streetMap1 strt1f[], int s1MasterMatris[4][9]);
-int * findEmptyColstrt1(int s1MasterMatris[4][9],int nullCount);
+void createInputFiles();
+int *init_S1_InputArray();
+void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size);
+void print_strt1_MasterMatris(struct streetMap1 strt1[], int s1MasterMatris[4][9]);
+int * find_EmptyCol_strt1(int s1MasterMatris[4][9],int nullCount);
+void print_strt1Struct(struct streetMap1 strt1[]);
+int get_NullCount_strt1(struct streetMap1 strt1[]);
+void inp_S1MasterMatris(struct streetMap1 strt1[],int s1MasterMatris[4][9]);
+char * init_strt1_NullArray(struct streetMap1 strt1[],int nullCount);
+//void delMtsCol_s1()
+//STRT STRT1
 
 int main() {
+    //s1Msize.row_size = 12; CALISIYOR
     int strt1Size = 8;
-    //GIRDI VE MODEL TEST EDILDI I/O DENKLEMI KALDI
     //TUM GIRIS CIKISA IHTIYAC VARMI ?
-    createInputFile(9);  //girdi adedi SIMDILIK hardcoded
+    createInputFiles();  //girdi adedi SIMDILIK hardcoded
     int *inputArray;
-    inputArray = initInputArray();
+    inputArray = init_S1_InputArray();
     int i,j,k = 0,nullCount = 0;
-    int s1MasterMatris[4][9]; // MATRISLE OYNAYABILMEK ICIN DINAKIK ALOOCATE MI GEREKIYOR
-    const char JUNCTION[4] = {'A','B','C','D'}; // GEREK YOK AMA SIMDILIK KALSIN
-    char inpStr[2];
-    char outStr[2];
-    initMap();
-    getstrt1Direction(strt1,strt1Size);    // Legal giriş bekleniyor
+    /*
 
-    char *strt1Null = malloc(1 * sizeof(char));
-    for (i = 0; i < 8; i++) {
-        strt1[i].dens = inputArray[i]; //DOSYADAN GIRIS
-        if (strt1[i].dens == -1) {
-            strt1Null = realloc(strt1Null , sizeof(char));
-            strt1Null[k] = strt1[i].name;
-            nullCount++;
-            k++;
-        }
-        printf(">>> strt1[%d].name >>> %c, strt1.route %c -> %c  strt1.dens -> %d\n",i,strt1[i].name,strt1[i].route[0],strt1[i].route[1],strt1[i].dens );
     }
+    */
+    int s1MasterMatris[4][9];
 
-    for (i = 0; i < nullCount; i++) {
-        printf(">>>strt1Null %c\n",strt1Null[i]);
-    }
-
-    // BUNU FONSK YAPMAYA GREK VARMI ?
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 9; j++) {
+    for (i = 0; i < S1ROW; i++) {
+        for (j = 0; j < S1COL; j++) {
             s1MasterMatris[i][j] = 0;
         }
     }
+    initMap();
+    get_strt1_Direction(strt1,strt1Size);    // Legal giriş bekleniyor
+    for (i = 0; i < 8; i++) {
+        strt1[i].dens = inputArray[i];
+    }
+    nullCount = get_NullCount_strt1(strt1);
+    char *strt1Null = malloc(nullCount * sizeof(char));
+    strt1Null =  init_strt1_NullArray(strt1,nullCount);
+    print_strt1Struct(strt1);
+    printf("DEBUG\n" );
+    for (i = 0; i < nullCount; i++) {
+        printf(">sNull -> %c",strt1Null[i]); //DEBUGP
+    }
+    printf("\n" );
 
+    inp_S1MasterMatris(strt1,s1MasterMatris);
+    int *strt1emptyCol =malloc(nullCount * sizeof(int));
+    strt1emptyCol = find_EmptyCol_strt1(s1MasterMatris,nullCount);
+    print_strt1_MasterMatris(strt1,s1MasterMatris);
+
+    float **S1augMatrix= (float **)malloc(S1ROW * sizeof(float*));
+    for (i = 0; i < S1COL; i++) S1augMatrix[i] =(float *)malloc(S1COL * sizeof(float));
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 9; j++) {
+            S1augMatrix[i][j] = (float)s1MasterMatris[i][j];
+        }
+    }
+    for (i = 0; i < 8; i++) { //-> PRINT MASTER MATRIS FONK
+        printf(" %4c ",strt1[i].name);
+    }
+    printf(" cons (aug main) \n");
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j <  9; j++) {
+            printf("[%4.1f]", S1augMatrix[i][j]);
+        }
+        printf("\n" );
+    }
+    return 0;
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void inp_S1MasterMatris(struct streetMap1 strt1[],int s1MasterMatris[4][9]){
+    int i,j;
     int constantSum = 0;
+    const char JUNCTION[4] = {'A','B','C','D'};
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 8; j++) {
             if (strt1[j].route[1] == JUNCTION[i] && strt1[j].dens == -1) {
@@ -83,14 +119,22 @@ int main() {
         s1MasterMatris[i][8] = constantSum;
         constantSum = 0;
     }
-
-    int *strt1emptyCol =malloc(nullCount * sizeof(int));
-    strt1emptyCol = findEmptyColstrt1(s1MasterMatris,nullCount);
-    printstrt1MasterMatris(strt1,s1MasterMatris);
-    return 0;
+    /*
+    for (i = 0; i < 8; i++) { //-> PRINT MASTER MATRIS FONK
+        printf(" %4c ",strt1[i].name);
+    }
+    printf("sizeof dens -> %d\n",sizeof(strt1[0].dens) );
+    printf(" cons (FONK) \n");
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j <  9; j++) {
+            printf("[%d]",s1MasterMatris[i][j]);
+        }
+        printf("\n" );
+    }
+    */
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int * findEmptyColstrt1(int s1MasterMatris[4][9],int nullCount){
+
+int * find_EmptyCol_strt1(int s1MasterMatris[4][9],int nullCount){
     int tmp = 0,k = 0,i,j;
     int *strt1emptyCol = malloc(nullCount * sizeof(int));
     for (j = 0; j < 8; j++) {
@@ -105,18 +149,20 @@ int * findEmptyColstrt1(int s1MasterMatris[4][9],int nullCount){
         }
         tmp = 0;
     }
+    printf("DEBUG\n" );
     for (i = 0; i < nullCount; i++) {
-        printf(">>>bos sutun > %d\n",strt1emptyCol[i] );
+        printf(">>>EC > %d ",strt1emptyCol[i] ); //DEBUGG
     }
+    printf("\n");
     return strt1emptyCol;
 }
 
-void printstrt1MasterMatris(struct streetMap1 strt1f[], int s1MasterMatris[4][9]){
+void print_strt1_MasterMatris(struct streetMap1 strt1[], int s1MasterMatris[4][9]){
     int i,j;
     for (i = 0; i < 8; i++) { //-> PRINT MASTER MATRIS FONK
-        printf(" %4c ",strt1f[i].name);
+        printf(" %4c ",strt1[i].name);
     }
-    printf(" cons \n");
+    printf(" cons (PFONK)\n");
     for (i = 0; i < 4; i++) {
         for (j = 0; j <  9; j++) {
             printf("[%4d]",s1MasterMatris[i][j]);
@@ -125,11 +171,9 @@ void printstrt1MasterMatris(struct streetMap1 strt1f[], int s1MasterMatris[4][9]
     }
 }
 
-void getstrt1Direction(struct streetMap1 strt1f[],int strt1Size){
-    //GIRDI VE MODEL TEST EDILDI I/O DENKLEMI KALDI
-    createInputFile(9);  //girdi adedi SIMDILIK hardcoded
+void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
     int *inputArray;
-    inputArray = initInputArray();
+    inputArray = init_S1_InputArray();
     int i,j,nullCount = 0;
     const char JUNCTION[4] = {'A','B','C','D'};
     const char allstrt1[8] = {'x','y','z','t','a','b','c','d'};
@@ -206,7 +250,7 @@ void getstrt1Direction(struct streetMap1 strt1f[],int strt1Size){
         printf("\n-> caddlerin yönlerini seçin \n" );
         printf("-> a caddesinin yönünü seçin (x,t): " );
         scanf(" %c",&tmpc );
-        if (tmpc == 'x' || tmpc =='z') {
+        if (tmpc == 'x' || tmpc =='t') {
             strt1[4].name = 'a';
             if (tmpc == 'x') {
                 strt1[4].route[0] = 'D';
@@ -271,27 +315,48 @@ void getstrt1Direction(struct streetMap1 strt1f[],int strt1Size){
     }
 }
 
-int createInputFile(int inputCount){
-    FILE *inputFile;
-    if ((inputFile = fopen(FILE_PATH,"r")) == NULL) {
+char * init_strt1_NullArray(struct streetMap1 strt1[],int nullCount){
+    int k = 0,i;
+    char *strt1Null = malloc(nullCount * sizeof(char));
+    for (i = 0; i < 8; i++) {
+        if (strt1[i].dens == -1) {
+            strt1Null[k] = strt1[i].name;
+            k++;
+        }
+    }
+    return strt1Null;
+}
+
+void createInputFiles(){
+    FILE *inputFileS1;
+    FILE *inputFileS2;
+    if ((inputFileS1 = fopen(FILE_PATH_S1,"r") == NULL ) || ( (inputFileS2 = fopen(FILE_PATH_S2,"r")) == NULL)) {
         printf("-> dosya bulunamadı yeniden oluşturulutor\n" );
-        inputFile = fopen(FILE_PATH,"w");
+        inputFileS1 = fopen(FILE_PATH_S1,"w");
+        inputFileS2 = fopen(FILE_PATH_S1,"w");
         int i;
         srand(time(0));//rasgele sayi üretimi icin
-        int fileArray[inputCount];
-        for (i = 0; i < inputCount; i++) {
-            fileArray[i] = rand() % 100;
-            fprintf(inputFile, "%d ",fileArray[i] );
+        int s1[8];
+        int s2[9];
+        for (i = 0; i < 8; i++) {
+            s1[i] = rand() % 100;
+            fprintf(inputFileS1, "%d ",s1[i] );
         }
-        fclose(inputFile);
+        for (i = 0; i < 9; i++) {
+            s1[i] = rand() % 100;
+            fprintf(inputFileS2, "%d ",s2[i] );
+        }
+        fclose(inputFileS1);
+        fclose(inputFileS2);
+
     }
     //flclose seg fault veriyor , dosya kapanmış
     //gözüküyor ama nasıl ? hocaya sor
-    printf("-> inputFile oluştu veya zaten vardı :)\n");
+    printf("-> inputFileS1 v inputFileS1 oluştu veya zaten vardı :)\n");
 }
 
-int *initInputArray(){
-    FILE * inputFile = fopen(FILE_PATH,"r");
+int *init_S1_InputArray(){
+    FILE * inputFile = fopen(FILE_PATH_S1,"r");
     if (inputFile == NULL) {
         printf("-> dosya açılamadı\n" );
     }
@@ -304,6 +369,23 @@ int *initInputArray(){
     }
     fclose(inputFile);
     return readbuf;
+}
+
+void print_strt1Struct(struct streetMap1 strt1[]){
+int i;
+for (i = 0; i < 8; i++) {
+    printf(">>> strt1[%d].name >>> %c, strt1.route %c -> %c  strt1.dens -> %d\n",i,strt1[i].name,strt1[i].route[0],strt1[i].route[1],strt1[i].dens );
+    }
+}
+
+int get_NullCount_strt1(struct streetMap1 strt1[]){
+    int i,nullCount = 0;
+    for (i = 0; i < 8; i++) {
+        if (strt1[i].dens == -1) {
+            nullCount++;
+        }
+    }
+    return nullCount;
 }
 
 void initMap() {
