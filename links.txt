@@ -1,0 +1,5 @@
+https://stackoverflow.com/questions/30713185/delete-a-column-and-a-row-in-a-square-matrix-in-c
+https://www.geeksforgeeks.org/dynamically-allocate-2d-array-c/
+https://rosettacode.org/wiki/Reduced_row_echelon_form
+https://en.wikipedia.org/wiki/Gaussian_elimination
+https://en.wikipedia.org/wiki/Row_echelon_form
