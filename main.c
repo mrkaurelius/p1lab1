@@ -1,17 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <string.h>
-#define FILE_PATH_S1  "/home/mrk1ub/WindowsDesktop/dev/pLab1/inputFileS1" //windowsta file path farklıdır
-#define FILE_PATH_S2  "/home/mrk1ub/WindowsDesktop/dev/pLab1/inputFileS2" //windowsta file path farklıdır
-#define FILE_PATH_MAP  "/home/mrk0debian/dev/c/proLab1/harita" //windowsta file path farklıdır
 #define S1ROW 5
 #define S1COL 9
+#define S2ROW 5
+#define S2COL 10
 
 struct s1MatrisSize{
     int row_size;
     int col_size;
 }s1Msize;
+
+struct s2MatrisSize{
+    int row_size;
+    int col_size;
+}s2Msize;
 
 struct streetMap1{
     char name;
@@ -26,36 +28,96 @@ struct streetMap2{
 }strt2[9];
 
 void initMap();
-void createInputFiles();
-int *init_S1_InputArray();
+//YOGUNLUKLARI ALDIRAN FONKSYON YAP
 void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size);
 void print_strt1_MasterMatris(struct streetMap1 strt1[], int s1MasterMatris[5][9]);
 void print_strt1Struct(struct streetMap1 strt1[]);
 int get_NullCount_strt1(struct streetMap1 strt1[]);
 void inp_S1MasterMatris(struct streetMap1 strt1[],int s1MasterMatris[5][9]);
 char * init_strt1_NullArray(struct streetMap1 strt1[],int nullCount,int *strt1emptyCol);
-void removeColumnS1(float **matrix, int col){
-    int i,k;
-    int tmp = col;
-    s1Msize.col_size--;
-    printf("silinecek sutun -> %d\n",col );
-    for(i=0;i < s1Msize.row_size; i++){
-        //move data to the left
-        while(col < s1Msize.col_size){
-            matrix[i][col]=matrix[i][col+1];
-            col++;
-        }
-        col = tmp;
-        matrix[i] = realloc(matrix[i], sizeof(float)*s1Msize.col_size);
-    }
+void removeColumnS1(int **matrix, int col);
+//NEDEN 2 KERE SWAP OLUYOR -CALISMAYA ETKISI YOK-
+void checkandSwapS1(int **matrix);
+void solveMatrisS1(int **matrix) {
+	int i;
+	int rix,iix;
+	int lead = 0;
+    //s1Msize.row_size = S1ROW;
+    //s1Msize.col_size = S1COL;
+
+	for (rix = 0; rix < s1Msize.row_size; rix++) {
+		printf("lead -> %d\n",lead );
+		if (lead >= s1Msize.col_size) {
+			printf("> rref bitti\n" );
+			break;
+		}
+		iix = rix;
+		while (matrix[iix,lead] == 0) { // pivotun altı sıfırmı onu kontrol ediyor
+			iix++;
+			if (iix == s1Msize.row_size) { // pivottan emin olduktan sonra aynı satıra dön
+				iix = rix;
+				lead++;
+				if (lead >= s1Msize.row_size) {
+					printf("> rref bitti\n" );
+					break;
+					}
+				}
+			}
+
+			if(matrix[iix] != matrix[rix]){
+				printf("%d ve %d satır değiştiriliyor\n" );
+				// neden satırları değiştiriyoruz
+				//lead sıfır ise o sunta baska lead adayı varmı ona bakıyoruz
+				//sonra onu swap ediyoruz
+				int *temp;
+				temp = matrix[iix];
+				matrix[iix] = matrix[rix];
+				matrix[rix] = temp;
+			}
+
+			//normalize row start
+			printf("rix->%d\n",rix );
+			int a = matrix[rix][lead];
+			if (matrix[rix][lead] != 0) {
+				for (i = 0; i < s1Msize.col_size ; i++) {
+					matrix[rix][i] = matrix[rix][i] / a;
+				}
+				printf("normalize den sonra\n" );
+			}
+			//normalize row end
+
+			for (iix = 0; iix < s1Msize.row_size; iix++) {
+				if ( iix != rix ) {
+					//MulandAd START
+					int ix;
+					int lv;
+					lv = matrix[iix][lead];
+					for (ix = 0; ix < s1Msize.col_size; ix++) {
+						//lv multiplier
+						//iix dest rix source
+						matrix[iix][ix] = matrix[iix][ix]  + (-lv * matrix[rix][ix]);
+					}
+					//printf("Mul row %d by %d and add to row %d\n", , , );
+					//MulandAd END
+				}
+			}
+			lead++;
+
+		}
+		printf("Reduced R-E form\n");
 }
 
+
 int main() {
+    //0 BASLANGICLI SATIRLARI SWAP ET
     //TUM GIRIS CIKISA IHTIYAC VARMI ?
+    // girdi alma mantıgından oturu isiml
+    //createInputFiles();
+    //int *inputArray;
+    //inputArray = init_S1_InputArray();
     int strt1Size = 8;
-    createInputFiles();  //girdi adedi SIMDILIK hardcoded
-    int *inputArray;
-    inputArray = init_S1_InputArray();
+    //int densValue[] = {20,10,20,10,10,30,40,20};
+    int densValue[] = {20,-1,20,-1,10,30,40,-1};
     int i,j,k = 0,nullCount = 0;
     int s1MasterMatris[5][9];
     for (i = 0; i < S1ROW; i++) {
@@ -65,8 +127,9 @@ int main() {
     }
     initMap();
     get_strt1_Direction(strt1,strt1Size);    // Legal giriş bekleniyor
+    //
     for (i = 0; i < 8; i++) {
-        strt1[i].dens = inputArray[i];
+        strt1[i].dens = densValue[i];
     }
     nullCount = get_NullCount_strt1(strt1);
     char *strt1Null = malloc(nullCount * sizeof(char));
@@ -83,15 +146,14 @@ int main() {
         printf(">eCol -> %d,",strt1emptyCol[i]); //DEBUGP
     }
     printf("\n" );
-
     inp_S1MasterMatris(strt1,s1MasterMatris);
     print_strt1_MasterMatris(strt1,s1MasterMatris);
 
-    float **augMatrixS1= (float **)malloc(S1ROW * sizeof(float*));
-    for (i = 0; i < S1ROW; i++) augMatrixS1[i] =(float *)malloc(S1COL * sizeof(float)); //AH ANAM VAY ANAM VAYY
+    int **augMatrixS1= (int **)malloc(S1ROW * sizeof(int*));
+    for (i = 0; i < S1ROW; i++) augMatrixS1[i] =(int *)malloc(S1COL * sizeof(int)); //AH ANAM VAY ANAM VAYY
     for (i = 0; i < 5; i++) {
         for (j = 0; j < 9; j++) {
-            augMatrixS1[i][j] = (float)s1MasterMatris[i][j];
+            augMatrixS1[i][j] = (int)s1MasterMatris[i][j];
         }
     }
 
@@ -100,6 +162,7 @@ int main() {
     for (i = 0; i < (8 - nullCount); i++) {
         removeColumnS1(augMatrixS1,strt1emptyCol[8 - nullCount - i - 1]); //MATRIS TERSETEN SAPLAR
     }
+    //swap zero leading row with another row until leading is 1
 
     printf("matris boyutu -> %d, %d \n",s1Msize.row_size,s1Msize.col_size );
     for (i = 0; i < nullCount; i++) { //-> PRINT MASTER MATRIS FONK
@@ -108,14 +171,57 @@ int main() {
     printf("\n" );
 
     for (i = 0; i < s1Msize.row_size; i++) {
-        for (j = 0; j < s1Msize.col_size; j++) { //sonuclar kaybolmuyor
-            printf("[%4.1f]", augMatrixS1[i][j]);
+        for (j = 0; j < s1Msize.col_size; j++) {
+            printf("[%3d]", augMatrixS1[i][j]);
         }
         printf("\n" );
     }
+    checkandSwapS1(augMatrixS1);
+    solveMatrisS1(augMatrixS1);
+    for (i = 0; i < s1Msize.row_size; i++) {
+        for (j = 0; j < s1Msize.col_size; j++) {
+            printf("[%3d]", augMatrixS1[i][j]);
+        }
+        printf("\n" );
+    }
+    // BACKWARD SUBSITUTE
     return 0;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void checkandSwapS1(int **matrix){
+	int i,j,k = 0;
+	int chg = s1Msize.row_size -1;
+	int *temp;
+	if(matrix[0][0] == 0){
+		for (i = 0; i < s1Msize.row_size; i++) {
+			if (matrix[i][0] != 0) {
+				temp = matrix[0];
+				matrix[0] = matrix[i];
+				matrix[i] = temp;
+                printf("ILK ELEMAN DEGISTI\n" );
+				break;
+			}
+		}
+	}
+	for (i = 0; i < s1Msize.row_size; i++) {
+		for (j = 0; j < s1Msize.col_size; j++) {
+			if (matrix[i][j] == 0) {
+				k++;
+			}
+			if ( k == s1Msize.row_size - 1) {
+				temp = matrix[i];
+				matrix[i] = matrix[chg];
+				matrix[chg] = temp;
+				printf("chg -> %d\n",chg );
+                printf("SWAP OLDU\n" );
+
+			}
+		}
+		k = 0;
+	}
+	//free(matrix[s1Msize.row_size])
+}
+
 void inp_S1MasterMatris(struct streetMap1 strt1[],int s1MasterMatris[5][9]){
     int i,j;
     int constantSum = 0;
@@ -138,12 +244,12 @@ void inp_S1MasterMatris(struct streetMap1 strt1[],int s1MasterMatris[5][9]){
         s1MasterMatris[i][8] = constantSum;
         constantSum = 0;
         }
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++) { //-1 +1 NEDEN TERS OLDU ?
         for (j = 0; j < 4; j++) {
             if (strt1[i].route[0] == 'I' && strt1[i].dens == -1 && strt1[i].name == strt1[j].name) {
-                s1MasterMatris[4][j] = 1;
-            }else if(strt1[i].route[1] == 'O' && strt1[i].dens == -1 && strt1[i].name == strt1[j].name) {
                 s1MasterMatris[4][j] = -1;
+            }else if(strt1[i].route[1] == 'O' && strt1[i].dens == -1 && strt1[i].name == strt1[j].name) {
+                s1MasterMatris[4][j] = 1;
             }
             if (strt1[i].route[1] == 'O' && strt1[i].dens != -1 && strt1[i].name == strt1[j].name) {
                 constantSum -= strt1[i].dens;
@@ -152,19 +258,23 @@ void inp_S1MasterMatris(struct streetMap1 strt1[],int s1MasterMatris[5][9]){
             }
         }
     }
-    /*
-    for (i = 0; i < 8; i++) { //-> PRINT MASTER MATRIS FONK
-        printf(" %4c ",strt1[i].name);
-    }
-    printf("sizeof dens -> %d\n",sizeof(strt1[0].dens) );
-    printf(" cons (FONK) \n");
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j <  9; j++) {
-            printf("[%d]",s1MasterMatris[i][j]);
+        s1MasterMatris[4][8] = constantSum;
+}
+
+void removeColumnS1(int **matrix, int col){
+    int i,k;
+    int tmp = col;
+    s1Msize.col_size--;
+    printf("silinecek sutun -> %d\n",col );
+    for(i=0;i < s1Msize.row_size; i++){
+        //move data to the left
+        while(col < s1Msize.col_size){
+            matrix[i][col]=matrix[i][col+1];
+            col++;
         }
-        printf("\n" );
+        col = tmp;
+        matrix[i] = realloc(matrix[i], sizeof(int)*s1Msize.col_size);
     }
-    */
 }
 
 void print_strt1_MasterMatris(struct streetMap1 strt1[], int s1MasterMatris[5][9]){
@@ -182,8 +292,9 @@ void print_strt1_MasterMatris(struct streetMap1 strt1[], int s1MasterMatris[5][9
 }
 
 void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
-    int *inputArray;
-    inputArray = init_S1_InputArray();
+    //int *inputArray;
+    //inputArray = init_S1_InputArray();
+    int densValue[] = {20,10,20,10,10,30,40,20};
     int i,j,nullCount = 0;
     const char JUNCTION[4] = {'A','B','C','D'};
     const char allstrt1[8] = {'x','y','z','t','a','b','c','d'};
@@ -230,7 +341,7 @@ void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
             break;
         }
     }
-
+    //BU MANTIKTAN OTURU -XYZT- SIRALI DEGİ
     strt1[0].name = inpStr[0];
     strt1[1].name = inpStr[1];
     strt1[2].name = outStr[0];
@@ -340,57 +451,12 @@ char * init_strt1_NullArray(struct streetMap1 strt1[],int nullCount,int *strt1em
     return strt1Null;
 }
 
-void createInputFiles(){
-    FILE *inputFileS1;
-    FILE *inputFileS2;  //!! COK HATALI ILERIDE KULLANMA
-    if ((inputFileS1 = fopen(FILE_PATH_S1,"r") == NULL ) && ( (inputFileS2 = fopen(FILE_PATH_S2,"r")) == NULL)) {
-        printf("-> dosya bulunamadı yeniden oluşturulutor\n" );
-        inputFileS1 = fopen(FILE_PATH_S1,"w");
-        inputFileS2 = fopen(FILE_PATH_S1,"w");
-        int i;
-        srand(time(0));//rasgele sayi üretimi icin
-        int s1[8];
-        int s2[9];
-        for (i = 0; i < 8; i++) {
-            s1[i] = rand() % 100;
-            fprintf(inputFileS1, "%d ",s1[i] );
-        }
-        for (i = 0; i < 9; i++) {
-            s1[i] = rand() % 100;
-            fprintf(inputFileS2, "%d ",s2[i] );
-        }
-        fclose(inputFileS1);
-        fclose(inputFileS2);
-
-    }
-    //flclose seg fault veriyor , dosya kapanmış
-    //gözüküyor ama nasıl ? hocaya sor
-    printf("-> inputFileS1 v inputFileS1 oluştu veya zaten vardı :)\n");
-}
-
-int *init_S1_InputArray(){
-    FILE * inputFile = fopen(FILE_PATH_S1,"r");
-    if (inputFile == NULL) {
-        printf("-> dosya açılamadı\n" );
-    }
-    int* readbuf;
-    readbuf = (int *) malloc (9 * sizeof(int));
-        for (int i=0; i<9; i++){
-         int j = 0;
-         fscanf (inputFile, "%d", &j);
-         readbuf[i] = j;
-    }
-    fclose(inputFile);
-    return readbuf;
-}
-
 void print_strt1Struct(struct streetMap1 strt1[]){
 int i;
 for (i = 0; i < 8; i++) {
     printf(">>> strt1[%d].name >>> %c, strt1.route %c -> %c  strt1.dens -> %d\n",i,strt1[i].name,strt1[i].route[0],strt1[i].route[1],strt1[i].dens );
     }
 }
-
 int get_NullCount_strt1(struct streetMap1 strt1[]){
     int i,nullCount = 0;
     for (i = 0; i < 8; i++) {
@@ -408,3 +474,50 @@ void initMap() {
     printf("      \\d c/         \n" );
     printf("        z       \n" );
 }
+/*
+void createInputFiles(){
+FILE *inputFileS1;
+FILE *inputFileS2;  //!! COK HATALI ILERIDE KULLANMA
+if ((inputFileS1 = fopen(FILE_PATH_S1,"r") == NULL ) && ( (inputFileS2 = fopen(FILE_PATH_S2,"r")) == NULL)) {
+printf("-> dosya bulunamadı yeniden oluşturulutor\n" );
+inputFileS1 = fopen(FILE_PATH_S1,"w");
+inputFileS2 = fopen(FILE_PATH_S1,"w");
+int i;
+srand(time(0));//rasgele sayi üretimi icin
+int s1[8];
+int s2[9];
+for (i = 0; i < 8; i++) {
+s1[i] = rand() % 100;
+fprintf(inputFileS1, "%d ",s1[i] );
+}
+for (i = 0; i < 9; i++) {
+s1[i] = rand() % 100;
+fprintf(inputFileS2, "%d ",s2[i] );
+}
+fclose(inputFileS1);
+fclose(inputFileS2);
+
+}
+//flclose seg fault veriyor , dosya kapanmış
+//gözüküyor ama nasıl ? hocaya sor
+printf("-> inputFileS1 v inputFileS1 oluştu veya zaten vardı :)\n");
+}
+*/
+/*
+int *init_S1_InputArray(){
+FILE * inputFile = fopen(FILE_PATH_S1,"r");
+if (inputFile == NULL) {
+printf("-> dosya açılamadı\n" );
+}
+int* readbuf;
+readbuf = (int *) malloc (9 * sizeof(int));
+for (int i=0; i<9; i++){
+int j = 0;
+fscanf (inputFile, "%d", &j);
+readbuf[i] = j;
+}
+fclose(inputFile);
+return readbuf;
+}
+
+*/
