@@ -72,8 +72,8 @@ void MtxMulAndAddRows(Matrix m, int ixrdest, int ixrsrc, EL_Type mplr)
     drow = m->mtx[ixrdest];
     srow = m->mtx[ixrsrc];
     for (ix=0; ix<m->dim_x; ix++)
-        drow[ix] += mplr * srow[ix];
-//	printf("Mul row %d by %d and add to row %d\n", ixrsrc, mplr, ixrdest);
+        drow[ix] = drow[ix] + mplr * srow[ix];
+	printf("Mul row %d by %d and add to row %d\n", ixrsrc, mplr, ixrdest);
 //	MtxDisplay(m);
 }
 
@@ -136,6 +136,18 @@ void MtxToReducedREForm(Matrix m)
         }
         lead++;
     }
+}
+
+void MtxMulAndAddRows(Matrix m, int ixrdest, int ixrsrc, EL_Type mplr)
+{
+    int ix;
+    EL_Type *drow, *srow;
+    drow = m->mtx[ixrdest];
+    srow = m->mtx[ixrsrc];
+    for (ix=0; ix<m->dim_x; ix++)
+        drow[ix] = drow[ix] + mplr * srow[ix];
+    printf("Mul row %d by %d and add to row %d\n", ixrsrc, mplr, ixrdest);
+//  MtxDisplay(m);
 }
 
 int main()

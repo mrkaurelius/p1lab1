@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #define S1ROW 5
 #define S1COL 9
 #define S2ROW 5
@@ -38,7 +39,7 @@ void removeColumnS1(int **matrix, int col);
 //NEDEN 2 KERE SWAP OLUYOR -CALISMAYA ETKISI YOK-
 void checkandSwapS1(int **matrix);
 void printAugMarisS1(int **matrix,int nullCount,char strt1Null[]);
-void solveMatrisS1(int **matrix);
+void solveMatrisS1(int **matrix,int nullCount,char strt1Null[]);
 
 void initMapS2();
 void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size);
@@ -51,42 +52,58 @@ void removeColumnS2(int **matrix, int col);
 //NEDEN 2 KERE SWAP OLUYOR -CALISMAYA ETKISI YOK-
 void checkandSwapS2(int **matrix);
 void printAugMarisS2(int **matrix,int nullCount,char strt2Null[]);
-void solveMatrisS2(int **matrix);
-
-
+void solveMatrisS2(int **matrix,int nullCount,char strt2Null[]);
+int checkSolvableS1(int **matrix);
+int checkSolvableS2(int **matrix);
+//void printSolutionS1(int **matrix,char strt1Null[],int nullCount);
+//void printSolutionS1(int **matrix,char strt1Null[],int nullCount);
+void printSolutionS1(int **matrix,char strt1Null[],int nullCount) {
+    printf("COZUM BITTI\n----------------------------\n" );
+    int i,j;
+    for (i = 0; i < nullCount;i++) {
+        printf(">>>%c = %d\n",strt1Null[i],matrix[i][s1Msize.col_size - 1] );
+    }
+}
+void printSolutionS2(int **matrix,char strt2Null[],int nullCount) {
+    printf("COZUM BITTI\n----------------------------\n" );
+    int i,j;
+    for (i = 0; i < nullCount;i++) {
+        printf(">>>%c = %d\n",strt2Null[i],matrix[i][s2Msize.col_size - 1] );
+    }
+}
 
 int main() {
-    //YOGUNLUKLARI ALDIRAN FONKSYON YAP
-    //0 BASLANGICLI SATIRLARI SWAP ET ??
-    //TUM GIRIS CIKISA IHTIYAC VARMI ?
-    printf("harita1 v harita2\n" );
+    printf("harita1 v harita2 " );
     int chc;
     scanf("%d",&chc );
     if (chc == 1) {
-            int strt1Size = 8;
-            //int densValue[] = {20,10,20,10,10,30,40,20};
-            // 4 BILINMEYENDE VE  SONRASINDA PATLIYOR
-            int densValue[] = {-1,10,-1,-1,10,30,40,20};
-            int i,j,k = 0,nullCount = 0;
-            int s1MasterMatris[5][9];
-            for (i = 0; i < S1ROW; i++) {
-                for (j = 0; j < S1COL; j++) {
-                    s1MasterMatris[i][j] = 0;
-                }
+        int strt1Size = 8;
+        //int densValue[] = {20,10,20,10||,10,30,40,20};
+        int densValue[] = {-1,-1,20,-1,10,30,-1,20};
+        int i,j,k = 0,nullCount = 0;
+        int s1MasterMatris[5][9];
+        for (i = 0; i < S1ROW; i++) {
+            for (j = 0; j < S1COL; j++) {
+                s1MasterMatris[i][j] = 0;
             }
-            initMapS1();
-            get_strt1_Direction(strt1,strt1Size);    // Legal giriş bekleniyor
-            //
-            for (i = 0; i < 8; i++) {
-                strt1[i].dens = densValue[i];
-            }
-            nullCount = get_NullCount_strt1(strt1);
-            char *strt1Null = malloc(nullCount * sizeof(char));
-            int *strt1emptyCol =malloc((8 - nullCount) * sizeof(int));
-            strt1Null =  init_strt1_NullArray(strt1,nullCount,strt1emptyCol);
-            print_strt1Struct(strt1);
-            printf("DEBUG\n" );
-            for (i = 0; i < nullCount; i++) {
+        }
+        initMapS1();
+        get_strt1_Direction(strt1,strt1Size);    // Legal giris bekleniyor
+
+        for (i = 0; i < 8; i++) {
+            strt1[i].dens = densValue[i];
+            //printf("%c nin yogunlugunu girin ",strt1[i].name );
+            //scanf("%d",&strt1[i].dens );
+            //printf(">>> strt1[%d].name >>> %c, strt1.route %c -> %c  strt1.dens -> %d\n",i,strt1[i].name,strt1[i].route[0],strt1[i].route[1],strt1[i].dens );
+        }
+
+        nullCount = get_NullCount_strt1(strt1);
+        char *strt1Null = malloc(nullCount * sizeof(char));
+        int *strt1emptyCol =malloc((8 - nullCount) * sizeof(int));
+        strt1Null =  init_strt1_NullArray(strt1,nullCount,strt1emptyCol);
+        print_strt1Struct(strt1);
+        printf("DEBUG\n" );
+        for (i = 0; i < nullCount; i++) {
                 printf(">sNull -> %c,",strt1Null[i]); //DEBUGP
             }
             printf("\n" );
@@ -108,24 +125,35 @@ int main() {
 
             s1Msize.row_size = S1ROW;
             s1Msize.col_size = S1COL;
-            for (i = 0; i < (8 - nullCount); i++) {
-                removeColumnS1(augMatrixS1,strt1emptyCol[8 - nullCount - i - 1]); //MATRIS TERSETEN SAPLAR
-            }
-            //swap zero leading row with another row until leading is 1
+        for (i = 0; i < (8 - nullCount); i++) {
+            removeColumnS1(augMatrixS1,strt1emptyCol[8 - nullCount - i - 1]); //MATRIS TERSETEN SAPLAR
+        }
+        //printf("matris boyutu -> %d, %d \n",s1Msize.row_size,s1Msize.col_size );
+	    //void printAugMarisS1(int **matrix,int nullCount,char strt1Null[]) {
+        //printAugMarisS1(augMatrixS1,nullCount,strt1Null);
+        printf("COZUMDEN ONCE\n" );
+        printAugMarisS1(augMatrixS1,nullCount,strt1Null);
+        printf("COZUM BASLIYOR\n----------------------------\n" );
+        solveMatrisS1(augMatrixS1,nullCount,strt1Null);
+        printAugMarisS1(augMatrixS1,nullCount,strt1Null);
+        // BACKWARD SUBSITUTE
 
-            printf("matris boyutu -> %d, %d \n",s1Msize.row_size,s1Msize.col_size );
-            //void printAugMarisS1(int **matrix,int nullCount,char strt1Null[]) {
-            printAugMarisS1(augMatrixS1,nullCount,strt1Null);
-            checkandSwapS1(augMatrixS1);
-            solveMatrisS1(augMatrixS1);
-            printAugMarisS1(augMatrixS1,nullCount,strt1Null);
-            // BACKWARD SUBSITUTE
+        if (nullCount > 5) {
+            printf("BIRDEN FAZLA DEGISGENE BAGLI COZUM\n" );
+            return -1;
+        }else if (checkSolvableS1(augMatrixS1) != -1) {
+            printf("DEGISGENE BAGLI COZUM\nBAGLI DEGER -> %c\n",strt1Null[checkSolvableS1(augMatrixS1)] );
+            return -1;
+        }
+        printSolutionS1(augMatrixS1,strt1Null,nullCount);
+
     }
+
     if (chc == 2) {
         int strt2Size = 9;
         //MAP 2 densValue[] = {10,10,10,10||,10,20,40,30,10};
         // 4 BILINMEYENDE VE  SONRASINDA PATLIYOR
-        int densValue[] = {-1,10,-1,10,-1,20,40,30,10};
+        int densValue[] = {10,-1,10,-1,-1,20,-1,30,10};
         int i,j,k = 0,nullCount = 0;
         int s2MasterMatris[5][10];
         for (i = 0; i < S2ROW; i++) {
@@ -134,14 +162,18 @@ int main() {
             }
         }
         initMapS2();
-        get_strt2_Direction(strt2,strt2Size);    // Legal giriş bekleniyor
+        get_strt2_Direction(strt2,strt2Size);    // Legal giris bekleniyor
         //
         for (i = 0; i < 9; i++) {
             strt2[i].dens = densValue[i];
+            //printf("%c nin yogunlugunu girin ",strt1[i].name );
+            //scanf("%d",&strt1[i].dens );
+            //printf(">>> strt1[%d].name >>> %c, strt1.route %c -> %c  strt1.dens -> %d\n",i,strt1[i].name,strt1[i].route[0],strt1[i].route[1],strt1[i].dens );
+
         }
         nullCount = get_NullCount_strt2(strt2);
         char *strt2Null = malloc(nullCount * sizeof(char));
-        int *strt2emptyCol =malloc((8 - nullCount) * sizeof(int));
+        int *strt2emptyCol =malloc((9 - nullCount) * sizeof(int));
         strt2Null =  init_strt2_NullArray(strt2,nullCount,strt2emptyCol);
         print_strt2Struct(strt2);
         printf("DEBUG\n" );
@@ -170,87 +202,139 @@ int main() {
         for (i = 0; i < (9 - nullCount); i++) {
             removeColumnS2(augMatrixS2,strt2emptyCol[9 - nullCount - i - 1]); //MATRIS TERSETEN SAPLAR
         }
-        //swap zero leading row with another row until leading is 1
 
-        printf("matris boyutu -> %d, %d \n",s2Msize.row_size,s2Msize.col_size );
+        //printf("matris boyutu -> %d, %d \n",s2Msize.row_size,s2Msize.col_size );
         //void printAugMarisS2(int **matrix,int nullCount,char strt2Null[]) {
+        printf("COZUMDEN ONCE\n" );
         printAugMarisS2(augMatrixS2,nullCount,strt2Null);
-        checkandSwapS2(augMatrixS2);
+        //checkandSwapS2(augMatrixS2); // GEREKSIZ
+        printf("COZUM BASLIYOR\n----------------------------\n" );
+        solveMatrisS2(augMatrixS2,nullCount,strt2Null);
         printAugMarisS2(augMatrixS2,nullCount,strt2Null);
-        solveMatrisS2(augMatrixS2);
-        printAugMarisS2(augMatrixS2,nullCount,strt2Null);
+
+        if (nullCount > 5) {
+            printf("BIRDEN FAZLA DEGISGENE BAGLI COZUM\n" );
+            return -1;
+        }else if (checkSolvableS2(augMatrixS2) != -1) {
+            printf("DEGISGENE BAGLI COZUM\nBAGLI DEGER -> %c\n",strt2Null[checkSolvableS2(augMatrixS2)] );
+            return -1;
+        }
         // BACKWARD SUBSITUTE
+        printSolutionS2(augMatrixS2,strt2Null,nullCount);
+
+
     }
     return 0;
 }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void solveMatrisS1(int **matrix) {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void solveMatrisS1(int **matrix,int nullCount,char strt1Null[]) {
 	int i;
 	int rix,iix;
 	int lead = 0;
     //s1Msize.row_size = S1ROW;
     //s1Msize.col_size = S1COL;
+    //printf("s1Msize.row_size -> %d\n",s1Msize.row_size );
+    //printf("s1Msize.col_size -> %d\n",s1Msize.col_size );
+    int rowCount = s1Msize.row_size;
 
-	for (rix = 0; rix < s1Msize.row_size; rix++) {
-		printf("lead -> %d\n",lead );
+	for (rix = 0; rix < rowCount; rix++) {
+		//printf("lead -> %d\n",lead );
 		if (lead >= s1Msize.col_size) {
-			printf("> rref bitti\n" );
-			break;
+			printf("RREF BITTI\n" );
+			return;
 		}
 		iix = rix;
-		while (matrix[iix,lead] == 0) { // pivotun altı sıfırmı onu kontrol ediyor
+		while (0 == matrix[iix][lead]) { // pivotun alti sifirmi onu kontrol ediyor
 			iix++;
-			if (iix == s1Msize.row_size) { // pivottan emin olduktan sonra aynı satıra dön
+			if (iix == rowCount) { // pivottan emin olduktan sonra ayni satira don
 				iix = rix;
 				lead++;
-				if (lead >= s1Msize.row_size) {
-					printf("> rref bitti\n" );
-					break;
+				if (lead == s1Msize.col_size) {
+					printf("RREF BITTI\n" );
+					return;
 					}
 				}
 			}
 
-			if(matrix[iix] != matrix[rix]){
-				printf("%d ve %d satır değiştiriliyor\n" );
-				// neden satırları değiştiriyoruz
-				//lead sıfır ise o sunta baska lead adayı varmı ona bakıyoruz
+			if(iix != rix){
+				// neden satirlari degistiriyoruz
+				//lead sifir ise o sunta baska lead adayi varmi ona bakiyoruz
 				//sonra onu swap ediyoruz
 				int *temp;
 				temp = matrix[iix];
 				matrix[iix] = matrix[rix];
 				matrix[rix] = temp;
+                printf("%d  %d SATIRLARIN YERI DEGISTI\n",rix,iix );
 			}
 
 			//normalize row start
-			printf("rix->%d\n",rix );
+			//printf("rix->%d\n",rix );
 			int a = matrix[rix][lead];
-			if (matrix[rix][lead] != 0) {
+			if (matrix[rix][lead] != 0) { // LEAD ZATEN SIFIR OLAMAZ ?
+                if (lead == -1) {
+                    a = -1; // GEREK VARMIYDI ACEBA
+                }
 				for (i = 0; i < s1Msize.col_size ; i++) {
 					matrix[rix][i] = matrix[rix][i] / a;
 				}
-				printf("normalize den sonra\n" );
+                printf("SATIR %d NORMALIZE EDILDI \n",rix );
+                printAugMarisS1(matrix,nullCount,strt1Null);
+                printf("\n");
 			}
 			//normalize row end
-
-			for (iix = 0; iix < s1Msize.row_size; iix++) {
+            int forPrint;
+            int forPrint1;
+			for (iix = 0; iix < rowCount; iix++) {
 				if ( iix != rix ) {
+                    forPrint1 = iix;
 					//MulandAd START
 					int ix;
 					int lv;
 					lv = matrix[iix][lead];
-					for (ix = 0; ix < s1Msize.col_size; ix++) {
+                    forPrint = lv;
+                    for (ix = 0; ix < s1Msize.col_size ; ix++) {
 						//lv multiplier
 						//iix dest rix source
 						matrix[iix][ix] = matrix[iix][ix]  + (-lv * matrix[rix][ix]);
+                        //BUNUN CALISMASINA BIRDAHA BAK VE HESABI PRINTF ILE BELIRT
 					}
-					//printf("Mul row %d by %d and add to row %d\n", , , );
 					//MulandAd END
 				}
 			}
-			lead++;
 
+            printf("Mul row %d by %d and add to row %d\n",rix ,-forPrint ,forPrint1 );
+            printAugMarisS1(matrix,nullCount,strt1Null);
+            printf("\n");
+			lead++;
 		}
 		printf("Reduced R-E form\n");
+}
+
+int checkSolvableS1(int **matrix){
+    int i,k = 0;
+    //s1Msize.row_size;
+    //s1Msize.col_size;
+    int nanZeroCount = 0;
+    int dependColumn;
+    nanZeroCount = 0;
+
+    for (i = 0; i < s1Msize.col_size - 1; i++) {
+        while (k < s1Msize.row_size) {
+        if (matrix[k][i] != 0 ) {
+            nanZeroCount++;
+            if (nanZeroCount > 1) {
+                dependColumn = i;
+                return dependColumn;
+            }
+        }
+        k++;
+        }
+        nanZeroCount = 0;
+        k = 0;
+    }
+    return -1;
 }
 
 void checkandSwapS1(int **matrix){
@@ -260,6 +344,7 @@ void checkandSwapS1(int **matrix){
 	if(matrix[0][0] == 0){
 		for (i = 0; i < s1Msize.row_size; i++) {
 			if (matrix[i][0] != 0) {
+                printf("ILK SATIR SWAP\n");
 				temp = matrix[0];
 				matrix[0] = matrix[i];
 				matrix[i] = temp;
@@ -279,12 +364,12 @@ void checkandSwapS1(int **matrix){
 				matrix[chg] = temp;
 				printf("chg -> %d\n",chg );
                 printf("SWAP OLDU\n" );
-
+                return;
+                //FAZLA 0 LI SATIR VARSA PATLAR
 			}
 		}
 		k = 0;
 	}
-	//free(matrix[s1Msize.row_size])
 }
 
 void inp_S1MasterMatris(struct streetMap1 strt1[],int s1MasterMatris[5][9]){
@@ -330,7 +415,7 @@ void removeColumnS1(int **matrix, int col){
     int i,k;
     int tmp = col;
     s1Msize.col_size--;
-    printf("silinecek sutun -> %d\n",col );
+    //printf("silinecek sutun -> %d\n",col );
     for(i=0;i < s1Msize.row_size; i++){
         //move data to the left
         while(col < s1Msize.col_size){
@@ -359,28 +444,28 @@ void print_strt1_MasterMatris(struct streetMap1 strt1[], int s1MasterMatris[5][9
 void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
     //int *inputArray;
     //inputArray = init_S1_InputArray();
-    int densValue[] = {20,10,20,10,10,30,40,20};
-    int i,j,nullCount = 0;
+    int nullCount = 0;
+    int i,j = 0;
     const char JUNCTION[4] = {'A','B','C','D'};
-    const char allstrt1[8] = {'x','y','z','t','a','b','c','d'};
+    //const char allstrt1[8] = {'x','y','z','t','a','b','c','d'};
     const char outerstrt1[4] = {'x','y','z','t'};
     const char innerstrt1[4] = {'a','b','c','d'};
     char inpStr[2];
     char outStr[2];
     int k = 0;
-    printf("-> girişleri seçin ve çıkışları seçin (x,y,z,t) \n" );
+    printf("-> girisleri secin ve cikislari secin (x,y,z,t) \n" );
     while(1){
-        printf("-> %d. girişi seçin:  ",k+1 );
+        printf("-> %d. girisi secin:  ",k+1 );
         scanf(" %c",&inpStr[k]);
         if (inpStr[k] != 'x' && inpStr[k] != 'y' &&inpStr[k] != 'z' &&inpStr[k] != 't') {
-            printf("-> hatalı giriş yaptınız! (girdi x,y,z,t değil)\n" );
+            printf("-> hatali giris yaptiniz! (girdi x,y,z,t degil)\n" );
             continue;
         }
         printf(" >>> %c\n",inpStr[k] );
         k++;
         if (k == 2) {
             if (inpStr[0] == inpStr[1]) {
-                printf("-> hatalı giriş yaptınız! (2 giriş aynı)\n" );
+                printf("-> hatali giris yaptiniz! (2 giris ayni)\n" );
                 k = 0;
                 continue;
             }
@@ -389,24 +474,24 @@ void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
     }
     k = 0;
     while(1){
-        printf("-> %d. çıkış seçin:  ",k+1 );
+        printf("-> %d. cikis secin:  ",k+1 );
         scanf(" %c",&outStr[k]);
         if (outStr[k] != 'x' && outStr[k] != 'y' && outStr[k] != 'z' && outStr[k] != 't' || outStr[k] == inpStr[0] || outStr[k] == inpStr[1]) {
-            printf("-> hatalı çıkış yaptınız! (girdi x,y,z,t değil v giriş ve çıkış aynı)\n" );
+            printf("-> hatali cikis yaptiniz! (girdi x,y,z,t degil v giris ve cikis ayni)\n" );
             continue;
         }
         printf(" >>> %c\n",outStr[k] );
         k++;
         if (k == 2) {
             if (outStr[0] == outStr[1]) {
-                printf("-> hatalı girdi yaptınız! (2 çıkış aynı)\n" );
+                printf("-> hatali girdi yaptiniz! (2 cikis ayni)\n" );
                 k = 0;
                 continue;
             }
             break;
         }
     }
-    //BU MANTIKTAN OTURU -XYZT- SIRALI DEGİ
+    //BU MANTIKTAN OTURU -XYZT- SIRALI DEGI
     strt1[0].name = inpStr[0];
     strt1[1].name = inpStr[1];
     strt1[2].name = outStr[0];
@@ -433,8 +518,8 @@ void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
 
     while(1){
         char tmpc;
-        printf("\n-> caddlerin yönlerini seçin \n" );
-        printf("-> a caddesinin yönünü seçin (x,t): " );
+        printf("\n-> caddlerin yonlerini secin \n" );
+        printf("-> a caddesinin yonunu secin (x,t): " );
         scanf(" %c",&tmpc );
         if (tmpc == 'x' || tmpc =='t') {
             strt1[4].name = 'a';
@@ -446,10 +531,10 @@ void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
                 strt1[4].route[1] = 'D';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
-        printf("-> b caddesinin yönünü seçin (y,x): " );
+        printf("-> b caddesinin yonunu secin (y,x): " );
         scanf(" %c",&tmpc );
         if (tmpc == 'x' || tmpc =='y') {
             strt1[5].name = 'b';
@@ -462,10 +547,10 @@ void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
                 strt1[5].route[1] = 'B';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
-        printf("-> c caddesinin yönünü seçin (y,z): " );
+        printf("-> c caddesinin yonunu secin (y,z): " );
         scanf(" %c",&tmpc );
         if (tmpc == 'z' || tmpc =='y') {
             strt1[6].name = 'c';
@@ -478,10 +563,10 @@ void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
                 strt1[6].route[1] = 'B';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
-        printf("-> d caddesinin yönünü seçin (z,t): " );
+        printf("-> d caddesinin yonunu secin (z,t): " );
         scanf(" %c",&tmpc );
         if (tmpc == 't' || tmpc =='z') {
             strt1[7].name = 'd';
@@ -494,7 +579,7 @@ void get_strt1_Direction(struct streetMap1 strt1[],int strt1Size){
                 strt1[7].route[1] = 'C';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
         break;
@@ -556,7 +641,7 @@ void printAugMarisS1(int **matrix,int nullCount,char strt1Null[]){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void solveMatrisS2(int **matrix) {
+void solveMatrisS2(int **matrix,int nullCount,char strt2Null[]) {
 	int i;
 	int rix,iix;
 	int lead = 0;
@@ -564,65 +649,96 @@ void solveMatrisS2(int **matrix) {
     //s2Msize.col_size = S2COL;
 
 	for (rix = 0; rix < s2Msize.row_size; rix++) {
-		printf("lead -> %d\n",lead );
+		//printf("lead -> %d\n",lead );
 		if (lead >= s2Msize.col_size) {
-			printf("> rref bitti\n" );
-			break;
+			printf("RREF BITTI\n" );
+			return;
 		}
 		iix = rix;
-		while (matrix[iix,lead] == 0) { // pivotun altı sıfırmı onu kontrol ediyor
+		while (matrix[iix][lead] == 0) { // pivotun alti sifirmi onu kontrol ediyor
 			iix++;
-			if (iix == s2Msize.row_size) { // pivottan emin olduktan sonra aynı satıra dön
+			if (iix == s2Msize.row_size) { // pivottan emin olduktan sonra ayni satira don
 				iix = rix;
 				lead++;
 				if (lead >= s2Msize.row_size) {
-					printf("> rref bitti\n" );
-					break;
+					printf("RREF BITTI\n" );
+					return;
 					}
 				}
 			}
 
 			if(matrix[iix] != matrix[rix]){
-				printf("%d ve %d satır değiştiriliyor\n" );
-				// neden satırları değiştiriyoruz
-				//lead sıfır ise o sunta baska lead adayı varmı ona bakıyoruz
+				// neden satirlari degistiriyoruz
+				//lead sifir ise o sunta baska lead adayi varmi ona bakiyoruz
 				//sonra onu swap ediyoruz
 				int *temp;
 				temp = matrix[iix];
 				matrix[iix] = matrix[rix];
 				matrix[rix] = temp;
+                printf("%d  %d SATIRLARIN YERI DEGISTI\n", iix,rix);
 			}
 
 			//normalize row start
-			printf("rix->%d\n",rix );
+			//printf("rix->%d\n",rix );
 			int a = matrix[rix][lead];
 			if (matrix[rix][lead] != 0) {
 				for (i = 0; i < s2Msize.col_size ; i++) {
 					matrix[rix][i] = matrix[rix][i] / a;
 				}
-				printf("normalize den sonra\n" );
+				printf("SATIR %d NORMALIZE EDILDI \n",rix );
+                printAugMarisS2(matrix,nullCount,strt2Null);
 			}
 			//normalize row end
-
+            int forPrint;
+            int forPrint1;
 			for (iix = 0; iix < s2Msize.row_size; iix++) {
 				if ( iix != rix ) {
+                    forPrint1 = iix;
 					//MulandAd START
 					int ix;
 					int lv;
 					lv = matrix[iix][lead];
+                    forPrint = lv;
 					for (ix = 0; ix < s2Msize.col_size; ix++) {
 						//lv multiplier
 						//iix dest rix source
 						matrix[iix][ix] = matrix[iix][ix]  + (-lv * matrix[rix][ix]);
 					}
-					//printf("Mul row %d by %d and add to row %d\n", , , );
-					//MulandAd END
 				}
 			}
+            //MulandAd END
+            printf("Mul row %d by %d and add to row %d\n",rix ,-forPrint ,forPrint1 );
+            printAugMarisS2(matrix,nullCount,strt2Null);
+            printf("\n");
 			lead++;
 
 		}
 		printf("Reduced R-E form\n");
+}
+
+int checkSolvableS2(int **matrix){
+    int i,k = 0;
+    //s1Msize.row_size;
+    //s1Msize.col_size;
+    int nanZeroCount = 0;
+    int dependColumn;
+    nanZeroCount = 0;
+
+    for (i = 0; i < s2Msize.col_size - 1; i++) {
+        while (k < s2Msize.row_size) {
+        if (matrix[k][i] != 0 ) {
+            nanZeroCount++;
+            if (nanZeroCount > 1) {
+                dependColumn = i;
+                return dependColumn;
+            }
+        }
+        k++;
+        }
+        nanZeroCount = 0;
+        k = 0;
+    }
+    return -1;
 }
 
 void checkandSwapS2(int **matrix){
@@ -645,7 +761,7 @@ void checkandSwapS2(int **matrix){
 			if (matrix[i][j] == 0) {
 				k++;
 			}
-			if ( k == s2Msize.row_size - 1) {
+			if ( k == s2Msize.col_size - 1) {
 				temp = matrix[i];
 				matrix[i] = matrix[chg];
 				matrix[chg] = temp;
@@ -702,7 +818,7 @@ void removeColumnS2(int **matrix, int col){
     int i,k;
     int tmp = col;
     s2Msize.col_size--;
-    printf("silinecek sutun -> %d\n",col );
+    //printf("silinecek sutun -> %d\n",col );
     for(i=0;i < s2Msize.row_size; i++){
         //move data to the left
         while(col < s2Msize.col_size){
@@ -716,7 +832,7 @@ void removeColumnS2(int **matrix, int col){
 
 void print_strt2_MasterMatris(struct streetMap2 strt2[], int s2MasterMatris[5][10]){
     int i,j;
-    for (i = 0; i < 8; i++) { //-> PRINT MASTER MATRIS FONK
+    for (i = 0; i < 9; i++) { //-> PRINT MASTER MATRIS FONK
         printf(" %4c ",strt2[i].name);
     }
     printf(" cons \n");
@@ -740,19 +856,19 @@ void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size){
     char inpStr[2];
     char outStr[2];
     int k = 0;
-    printf("-> girişleri seçin ve çıkışları seçin (x,y,z,t) \n" );
+    printf("-> girisleri secin ve cikislari secin (x,y,z,t) \n" );
     while(1){
-        printf("-> %d. girişi seçin:  ",k+1 );
+        printf("-> %d. girisi secin:  ",k+1 );
         scanf(" %c",&inpStr[k]);
         if (inpStr[k] != 'x' && inpStr[k] != 'y' &&inpStr[k] != 'z' &&inpStr[k] != 't') {
-            printf("-> hatalı giriş yaptınız! (girdi x,y,z,t değil)\n" );
+            printf("-> hatali giris yaptiniz! (girdi x,y,z,t degil)\n" );
             continue;
         }
         printf(" >>> %c\n",inpStr[k] );
         k++;
         if (k == 2) {
             if (inpStr[0] == inpStr[1]) {
-                printf("-> hatalı giriş yaptınız! (2 giriş aynı)\n" );
+                printf("-> hatali giris yaptiniz! (2 giris ayni)\n" );
                 k = 0;
                 continue;
             }
@@ -761,24 +877,24 @@ void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size){
     }
     k = 0;
     while(1){
-        printf("-> %d. çıkış seçin:  ",k+1 );
+        printf("-> %d. cikis secin:  ",k+1 );
         scanf(" %c",&outStr[k]);
         if (outStr[k] != 'x' && outStr[k] != 'y' && outStr[k] != 'z' && outStr[k] != 't' || outStr[k] == inpStr[0] || outStr[k] == inpStr[1]) {
-            printf("-> hatalı çıkış yaptınız! (girdi x,y,z,t değil v giriş ve çıkış aynı)\n" );
+            printf("-> hatali cikis yaptiniz! (girdi x,y,z,t degil v giris ve cikis ayni)\n" );
             continue;
         }
         printf(" >>> %c\n",outStr[k] );
         k++;
         if (k == 2) {
             if (outStr[0] == outStr[1]) {
-                printf("-> hatalı girdi yaptınız! (2 çıkış aynı)\n" );
+                printf("-> hatali girdi yaptiniz! (2 cikis ayni)\n" );
                 k = 0;
                 continue;
             }
             break;
         }
     }
-    //BU MANTIKTAN OTURU -XYZT- SIRALI DEGİ
+    //BU MANTIKTAN OTURU -XYZT- SIRALI DEGI
     strt2[0].name = inpStr[0];
     strt2[1].name = inpStr[1];
     strt2[2].name = outStr[0];
@@ -805,8 +921,8 @@ void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size){
 
     while(1){
         char tmpc;
-        printf("\n-> caddlerin yönlerini seçin \n" );
-        printf("-> a caddesinin yönünü seçin (x,t): " );
+        printf("\n-> caddlerin yonlerini secin \n" );
+        printf("-> a caddesinin yonunu secin (x,t): " );
         scanf(" %c",&tmpc );
         if (tmpc == 'x' || tmpc =='t') {
             strt2[4].name = 'a';
@@ -818,10 +934,10 @@ void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size){
                 strt2[4].route[1] = 'D';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
-        printf("-> b caddesinin yönünü seçin (y,x): " );
+        printf("-> b caddesinin yonunu secin (y,x): " );
         scanf(" %c",&tmpc );
         if (tmpc == 'x' || tmpc =='y') {
             strt2[5].name = 'b';
@@ -834,10 +950,10 @@ void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size){
                 strt2[5].route[1] = 'B';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
-        printf("-> c caddesinin yönünü seçin (y,z): " );
+        printf("-> c caddesinin yonunu secin (y,z): " );
         scanf(" %c",&tmpc );
         if (tmpc == 'z' || tmpc =='y') {
             strt2[6].name = 'c';
@@ -850,10 +966,10 @@ void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size){
                 strt2[6].route[1] = 'B';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
-        printf("-> d caddesinin yönünü seçin (z,t): " );
+        printf("-> d caddesinin yonunu secin (z,t): " );
         scanf(" %c",&tmpc );
         if (tmpc == 't' || tmpc =='z') {
             strt2[7].name = 'd';
@@ -866,10 +982,10 @@ void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size){
                 strt2[7].route[1] = 'C';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
-        printf("-> e caddesinin yönünü seçin (y,t): " );
+        printf("-> e caddesinin yonunu secin (y,t): " );
         scanf(" %c",&tmpc );
         if (tmpc == 'y' || tmpc =='t') {
             strt2[8].name = 'e';
@@ -882,7 +998,7 @@ void get_strt2_Direction(struct streetMap2 strt2[],int strt2Size){
                 strt2[8].route[1] = 'D';
             }
         }else{
-            printf("-> hatalı giriş yaptınız\n" );
+            printf("-> hatali giris yaptiniz\n" );
             continue;
         }
         break;
@@ -906,7 +1022,7 @@ char * init_strt2_NullArray(struct streetMap2 strt2[],int nullCount,int *strt2em
 
 void print_strt2Struct(struct streetMap2 strt2[]){
 int i;
-for (i = 0; i < 8; i++) {
+for (i = 0; i < 9; i++) {
     printf(">>> strt2[%d].name >>> %c, strt2.route %c -> %c  strt2.dens -> %d\n",i,strt2[i].name,strt2[i].route[0],strt2[i].route[1],strt2[i].dens );
     }
 }
